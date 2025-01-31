@@ -78,22 +78,15 @@ static void i2s_data_handler(void *arg)
         abort();
     }
   size_t bytes_read = 0;
-  uint16_t volume = 1;
   
   for (;;) {
-    memset(data, 0, 4096);
+    // read data from rx channel
     i2s_channel_read(rx_channel, data, 4096, &bytes_read, portMAX_DELAY);
 
-    /* cast data to 16 bit and scale */
-    int16_t *samples = (int16_t *)data;
-    for (int i = 0; i < bytes_read/2; i++) {
-
-        samples[i] = samples[i] * volume;
-    }
-        
+    // write data to ring buff
     retRing = xRingbufferSendFromISR(i2s_buf, (void *)data, bytes_read, NULL);
 
-    /* Determine if packets are being lost or not */
+    /* Determine if packets are being dropped or not */
     // if (retRing == pdFALSE && !dropping) {
     //     ESP_LOGW(BT_SOURCE_TAG, "************** DROPPED INCOMING DATA *******************");
     //     dropping = true;

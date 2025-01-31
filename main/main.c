@@ -118,7 +118,7 @@ static TimerHandle_t s_tmr;                                   /* handle of heart
 
 /* SET REMOTE DEVICE NAME HERE */
 static const char remote_device_name[] = "airpods - Find My";
-
+// static const char remote_device_name[] = "AirPods Pro";
 
 /*********************************
  * STATIC FUNCTION DEFINITIONS
@@ -729,7 +729,7 @@ static void bt_av_hdl_avrc_ct_evt(uint16_t event, void *p_param)
 *
 */
 
-/* RECEIVE DATA FROM I2S AND SEND TO THE REMOTE DEVICEf */
+/* RECEIVE DATA FROM I2S AND SEND TO THE REMOTE DEVICE */
 static int32_t bt_app_a2d_data_cb(uint8_t *data, int32_t len)
 {
 
