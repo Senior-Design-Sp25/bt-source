@@ -117,8 +117,11 @@ static TimerHandle_t s_tmr;                                   /* handle of heart
 
 
 /* SET REMOTE DEVICE NAME HERE */
-static const char remote_device_name[] = "airpods - Find My";
+// static const char remote_device_name[] = "airpods - Find My";
 // static const char remote_device_name[] = "AirPods Pro";
+static const char remote_device_name[] = "Bose OE SoundLink";
+// static const char remote_device_name[] = "DROP Panda";
+
 
 /*********************************
  * STATIC FUNCTION DEFINITIONS
@@ -440,6 +443,10 @@ static void bt_app_av_state_connecting_hdlr(uint16_t event, void *param)
             ESP_LOGI(BT_AV_TAG, "a2dp connected");
             s_a2d_state =  APP_AV_STATE_CONNECTED;
             s_media_state = APP_AV_MEDIA_STATE_IDLE;
+            if (esp_a2d_media_ctrl(ESP_A2D_MEDIA_CTRL_CHECK_SRC_RDY) == ESP_A2D_MEDIA_CTRL_ACK_SUCCESS) {
+                ESP_LOGW(BT_AV_TAG, "SETTING VOLUME");
+                esp_avrc_ct_send_set_absolute_volume_cmd(0, 80);
+            }
         } else if (a2d->conn_stat.state == ESP_A2D_CONNECTION_STATE_DISCONNECTED) {
             s_a2d_state =  APP_AV_STATE_UNCONNECTED;
         }
@@ -647,8 +654,8 @@ void bt_av_notify_evt_handler(uint8_t event_id, esp_avrc_rn_param_t *event_param
     /* when volume changed locally on target, this event comes */
     case ESP_AVRC_RN_VOLUME_CHANGE: {
         ESP_LOGI(BT_RC_CT_TAG, "Volume changed: %d", event_parameter->volume);
-        ESP_LOGI(BT_RC_CT_TAG, "Set absolute volume: volume %d", event_parameter->volume + 5);
-        esp_avrc_ct_send_set_absolute_volume_cmd(APP_RC_CT_TL_RN_VOLUME_CHANGE, event_parameter->volume + 5);
+        ESP_LOGI(BT_RC_CT_TAG, "Set absolute volume: volume %d", event_parameter->volume - 5);
+        esp_avrc_ct_send_set_absolute_volume_cmd(APP_RC_CT_TL_RN_VOLUME_CHANGE, event_parameter->volume - 5);
         bt_av_volume_changed();
         break;
     }
@@ -730,6 +737,7 @@ static void bt_av_hdl_avrc_ct_evt(uint16_t event, void *p_param)
 */
 
 /* RECEIVE DATA FROM I2S AND SEND TO THE REMOTE DEVICE */
+
 static int32_t bt_app_a2d_data_cb(uint8_t *data, int32_t len)
 {
 
@@ -740,16 +748,17 @@ static int32_t bt_app_a2d_data_cb(uint8_t *data, int32_t len)
     uint8_t *ringData = NULL;
     size_t size = 0;
 
-    ringData = (uint8_t *)xRingbufferReceiveUpTo(i2s_buf, &size, (TickType_t)portMAX_DELAY, len);
+    ringData = (uint8_t *)xRingbufferReceiveUpTo(upsamp_buf, &size, (TickType_t)portMAX_DELAY, len);
 
     // copy ringData to a2d data buff
     if (size != 0) {
       memcpy(data, ringData, size);
-      vRingbufferReturnItem(i2s_buf, (void *)ringData);
+      vRingbufferReturnItem(upsamp_buf, (void *)ringData);
     }
 
   return len;
 }
+
 
 /*********************************
  * MAIN ENTRY POINT
@@ -765,6 +774,8 @@ void app_main(void)
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
+
+    //init_SD();
 
     init_i2s();
 

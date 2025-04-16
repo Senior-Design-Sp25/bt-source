@@ -8,6 +8,7 @@
 
 /* Ringbuffer handle for audio stream */
 extern RingbufHandle_t i2s_buf;
+extern RingbufHandle_t upsamp_buf;
 
 
 #endif /* __COMMON_H__ */
